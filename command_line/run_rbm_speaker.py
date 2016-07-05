@@ -18,7 +18,7 @@ flags.DEFINE_boolean('encode_train', False, 'Whether to encode and store the tra
 flags.DEFINE_boolean('encode_valid', False, 'Whether to encode and store the validation set.')
 flags.DEFINE_boolean('encode_test', False, 'Whether to encode and store the test set.')
 flags.DEFINE_string('dataset', 'mnist', 'Which dataset to use. ["mnist", "cifar10", "custom"]')
-flags.DEFINE_string('train_dataset', '', 'Path to train set .npy file.')
+flags.DEFINE_string('train_dataset', 'train.npy', 'Path to train set .npy file.')
 flags.DEFINE_string('valid_dataset', '', 'Path to valid set .npy file.')
 flags.DEFINE_string('test_dataset', '', 'Path to test set .npy file.')
 flags.DEFINE_string('cifar_dir', '', 'Path to the cifar 10 dataset directory.')
@@ -28,15 +28,15 @@ flags.DEFINE_string('save_parameters', '', 'Path to save the parameters of the m
 flags.DEFINE_integer('seed', -1, 'Seed for the random generators (>= 0). Useful for testing hyperparameters.')
 
 # RBM configuration
-flags.DEFINE_integer('num_hidden', 250, 'Number of hidden units.')
-flags.DEFINE_string('visible_unit_type', 'bin', 'Type of visible units. ["bin", "gauss"]')
+flags.DEFINE_integer('num_hidden', 2500, 'Number of hidden units.')
+flags.DEFINE_string('visible_unit_type', 'gauss', 'Type of visible units. ["bin", "gauss"]')
 flags.DEFINE_string('main_dir', 'rbm/', 'Directory to store data relative to the algorithm.')
-flags.DEFINE_string('model_name', 'rbm_model', 'Name for the model.')
-flags.DEFINE_integer('verbose', 0, 'Level of verbosity. 0 - silent, 1 - print accuracy.')
+flags.DEFINE_string('model_name', 'rbm_model_s', 'Name for the model.')
+flags.DEFINE_integer('verbose', 1, 'Level of verbosity. 0 - silent, 1 - print accuracy.')
 flags.DEFINE_integer('gibbs_sampling_steps', 1, 'Number of gibbs sampling steps in Contrastive Divergence.')
 flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
 flags.DEFINE_float('stddev', 0.1, 'Standard deviation for the Gaussian visible units.')
-flags.DEFINE_integer('num_epochs', 10, 'Number of epochs.')
+flags.DEFINE_integer('num_epochs', 100, 'Number of epochs.')
 flags.DEFINE_integer('batch_size', 10, 'Size of each mini-batch.')
 flags.DEFINE_integer('transform_gibbs_sampling_steps', 10, 'Gibbs sampling steps for the transformation of data.')
 
@@ -46,46 +46,16 @@ assert FLAGS.visible_unit_type in ['bin', 'gauss']
 
 if __name__ == '__main__':
 
+    def load_from_np(dataset_path):
+        if dataset_path != '':
+            return np.load(dataset_path)
+        else:
+            return None
+
     utilities.random_seed_np_tf(FLAGS.seed)
-
-    if FLAGS.dataset == 'mnist':
-
-        # ################# #
-        #   MNIST Dataset   #
-        # ################# #
-
-        trX, vlX, teX = datasets.load_mnist_dataset(mode='unsupervised')
-        width, height = 28, 28
-
-    elif FLAGS.dataset == 'cifar10':
-
-        # ################### #
-        #   Cifar10 Dataset   #
-        # ################### #
-
-        trX, teX = datasets.load_cifar10_dataset(FLAGS.cifar_dir, mode='unsupervised')
-        vlX = teX[:5000]  # Validation set is the first half of the test set
-        width, height = 32, 32
-
-    elif FLAGS.dataset == 'custom':
-
-        # ################## #
-        #   Custom Dataset   #
-        # ################## #
-
-        def load_from_np(dataset_path):
-            if dataset_path != '':
-                return np.load(dataset_path)
-            else:
-                return None
-
-        trX = load_from_np(FLAGS.train_dataset)
-        vlX = load_from_np(FLAGS.valid_dataset)
-        teX = load_from_np(FLAGS.test_dataset)
-
-    else:
-        trX, vlX, teX, width, height = None, None, None, None, None
-
+    trX = load_from_np(FLAGS.train_dataset)
+    vlX = trX
+    teX = trX
 
     print(trX.shape)
 
@@ -129,5 +99,6 @@ if __name__ == '__main__':
         print('Transforming test data...')
         r.transform(teX, name='test', save=FLAGS.encode_test)
 
-    # print('babcia', r.reconstruct(np.load('babcia.npy')))
-    # print('tomek', r.reconstruct(np.load('babcia.npy')))
+    print('babcia', r.reconstruct(np.load('babcia.npy')))
+    print('mama', r.reconstruct(np.load('mama.npy')))
+    print('mrcin', r.reconstruct(teX[0]))
